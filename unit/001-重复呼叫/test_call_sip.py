@@ -14,9 +14,9 @@ def api_get_voip(url, session_id):
     """
     api_path = "/cgi-bin/webapi.cgi?api=voip"
 
-    payload = json.dumps({
+    payload = {
         "api": "voip"
-    })
+    }
     headers = {
         'Content-Type': 'application/json',
         'Cookie': "SessionID=" + session_id
