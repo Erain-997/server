@@ -9,6 +9,8 @@ from start.api import api_login
 from start.telnet import connect_telnet, execute_command
 from start.tools import read_config
 
+from log.log import log_record
+
 """
 "0":"卡","1":"密码","2":"对讲","3":"出门按钮","_4":"人脸","5":"APP","6":"HTTP",
 
@@ -34,7 +36,7 @@ def api_del_unlock_password(url, session_id, index):
     }
 
     response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
-    print("api_del_unlock_password", response.text)
+    # print("api_del_unlock_password", response.text)
     response_json = json.loads(response.text)
     return response_json
 
@@ -56,7 +58,7 @@ def api_del_unlock_logs(url, session_id, index):
     }
 
     response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
-    print("api_del_unlock_logs", response.text)
+    # print("api_del_unlock_logs", response.text)
     response_json = json.loads(response.text)
     return response_json
 
@@ -80,7 +82,7 @@ def api_set_unlock_password(url, session_id, action, password, relays):
     }
 
     response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
-    print("api_set_unlock_password", response.text)
+    # print("api_set_unlock_password", response.text)
     response_json = json.loads(response.text)
     return response_json
 
@@ -101,7 +103,7 @@ def api_get_unlock_password(url, session_id):
     }
 
     response = requests.request("GET", "http://" + url + api_path, headers=headers, data=payload)
-    print("api_get_unlock_password", response.text)
+    # print("api_get_unlock_password", response.text)
     response_json = json.loads(response.text)
     return response_json
 
@@ -122,7 +124,7 @@ def api_get_unlock_logs(url, session_id):
     }
 
     response = requests.request("GET", "http://" + url + api_path, headers=headers, data=payload)
-    print("api_get_unlock_logs", response.text)
+    # print("api_get_unlock_logs", response.text)
     response_json = json.loads(response.text)
     return response_json
 
@@ -152,7 +154,7 @@ def api_check_unlock_logs(data, times):
     root = ET.fromstring(data)
     # 获取 max 字段
     max_value = root.find('max').text
-    print('总的记录条数:', max_value)
+    logger.info('总的记录条数:', max_value)
     # 数据处理, 处理出每一条记录
     logs_data = {}
     # 查找并分组元素
@@ -171,22 +173,27 @@ def api_check_unlock_logs(data, times):
     # 以下是数据校验
     count = 0
     fail = {}
+    # 获取测试数据
+    d = read_config()
+    number, status = d.get('check', 'number'), d.getint('check', 'status')
     for k, v in logs_data.items():
-        if v["number"] == "9999" and v["status"] == "0":
+        if v["number"] == number and v["status"] == str(status):
             count += 1
         if v["status"] != "0":
             fail["number"] += 1
     if count == times:
-        print("测试成功")
-        print("开锁成功条数:{},脚本执行次数:{}".format(count, times))
+        logger.info("测试成功")
+        logger.info("开锁成功条数:{},脚本执行次数:{}".format(count, times))
     else:
-        print("开锁成功条数:{},脚本执行次数:{}".format(count, times))
-        print("失败次数:{},号码已经对应次数:{}".format(len(fail), fail))
+        logger.info("开锁成功条数:{},脚本执行次数:{}".format(count, times))
+        logger.info("失败次数:{},号码以及对应次数:{}".format(len(fail), fail))
 
 
+logger = log_record()
 if __name__ == '__main__':
     # 获取测试数据
-    url, times = read_config()
+    data = read_config()
+    url, times = data.get('info', 'url'), data.getint('info', 'times')
     # 登录设备
     session = api_login(url)
     # 删除开锁密码
@@ -202,7 +209,7 @@ if __name__ == '__main__':
 
     if tn:
         # 测试次数
-        for i in range(1, times):
+        for i in range(1, times + 1):
             # 开锁
             shell_script = """
             #!/bin/sh
@@ -222,10 +229,10 @@ if __name__ == '__main__':
             """
             # 执行命令
             execute_command(tn, shell_script)
-            print("这是第{}次开锁".format(i))
+            logger.info("这是第{}次开锁".format(i))
             time.sleep(8)
     else:
-        print("发送指令失败")
+        logger.info("发送指令失败")
 
     # 登录设备
     session = api_login(url)
@@ -234,7 +241,7 @@ if __name__ == '__main__':
     # 数据处理
     log = api_show_unlock_logs(url, session, log_path["file_name"])
     # 校验
-    api_check_unlock_logs(str(log), times - 1)
+    api_check_unlock_logs(str(log), times)
 
     # 关闭 Telnet 连接
     tn.close()

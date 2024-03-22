@@ -63,6 +63,28 @@ def api_set_voip(url, session_id, enable, display_name, user, userid, password, 
     print("api_set_voip", response.text)
 
 
+def api_del_call_logs(url, session_id, index):
+    """
+    :param url:
+    :param session_id:
+    :param index:编辑、删除有该参数，参数说明：删除多个时 index分号分割如0;1;2, 为-1时删除全部
+    :return:
+    """
+    api_path = "/cgi-bin/webapi.cgi?api=unlock_logs"
+
+    payload = "index={}".format(index)
+
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': "SessionID=" + session_id
+    }
+
+    response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
+    print("api_del_call_logs", response.text)
+    response_json = json.loads(response.text)
+    return response_json
+
+
 if __name__ == '__main__':
     call_url = "192.168.57.195"
     called_url = "192.168.57.200"
