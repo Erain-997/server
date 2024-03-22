@@ -156,8 +156,8 @@ if __name__ == '__main__':
     # 删除通话记录
     api_del_call_logs(called_url, session, "-1")
     # 设置响铃超时
-    duration = data.getint('check', 'duration')
-    api_set_call_timeout(called_url, session, str(duration), "120")
+    duration = data.get('check', 'duration')
+    api_set_call_timeout(called_url, session,duration, "120")
 
     # 用户名密码
     tn = connect_telnet(call_url, 9900, "root", "1234321")

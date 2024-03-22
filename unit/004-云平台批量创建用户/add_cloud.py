@@ -4,6 +4,8 @@ from start.api_cloud import api_cloud_login
 import json
 import requests
 
+from start.tools import read_config
+
 
 def api_cloud_creat_user(token, room):
     api_path = "https://test.api.cloud.ishanghome.com/admin-api/business/resident/create"
@@ -35,7 +37,7 @@ def api_cloud_creat_user(token, room):
 
     response = requests.request("POST", api_path, headers=headers, data=payload)
     response_json = json.loads(response.text)
-    logger.info("云平台创建用户:{},{}".format(room,response_json))
+    logger.info("云平台创建用户:{},{}".format(room, response_json))
     return response_json
 
 
@@ -55,9 +57,16 @@ def api_open_country_list(token):
     print("api_open_country_list: ", response_json, "-----------")
     return response_json
 
+
 logger = log_record()
 if __name__ == '__main__':
-    token = api_cloud_login("tai1234@qq.com", "Ye990605")
+    # 获取测试数据
+    data = read_config()
+    username, password = data.get('info', 'username'), data.get('info', 'password')
+    start, num = data.getint('info', 'start'), data.getint('info', 'num')
+
+    token = api_cloud_login(username, password)
+    # token = api_cloud_login("yeluoyy+yg@gmail.com", "a45lcuhm")
     # api_open_country_list(token, 5001)
-    for i in range(5002, 5201):
+    for i in range(start, start + num):
         api_cloud_creat_user(token, i)
