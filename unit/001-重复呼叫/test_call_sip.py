@@ -1,9 +1,12 @@
 import time
+
+from log.log import log_record
 from start.api import api_login
 import json
 import requests
 
 from start.telnet import put_down_key, telnet_ls, command_key, connect_telnet, execute_command
+from start.tools import read_config
 
 
 def api_get_voip(url, session_id):
@@ -85,20 +88,69 @@ def api_del_call_logs(url, session_id, index):
     return response_json
 
 
+import xml.etree.ElementTree as ET
+import re
+
+
+def api_check_call_logs(data, times):
+    # 解析 XML 字符串
+    root = ET.fromstring(data)
+    # 获取 max 字段
+    max_value = root.find('max').text
+    print('总的记录条数:', max_value)
+    # 数据处理, 处理出每一条记录
+    logs_data = {}
+    # 查找并分组元素
+    pattern = re.compile(r'^d\d+$')  # 匹配以 "d" 开头并后跟数字的字符串
+    for element in root.iter():
+        if pattern.match(element.tag):
+            # grouped_elements.append(element)
+            d = {}
+            for j in element:
+                d[j.tag] = j.text
+            logs_data[element.tag] = d
+
+    print("logs_data", len(logs_data))
+    print("数据内容", logs_data)
+
+    # 以下是数据校验
+    count = 0
+    fail = {}
+    # 获取测试数据
+    d = read_config()
+    number, duration = d.get('check', 'number'), d.getint('check', 'duration')
+    for k, v in logs_data.items():
+        if v["host"] == number and v["duration"] == duration:
+            count += 1
+        if v["duration"] != duration:
+            if fail.get("响铃时间" + v["duration"] + "s"):
+                fail["响铃时间" + v["duration"] + "s"] += 1
+            else:
+                fail["响铃时间" + v["duration"]] = 1
+    if count == times:
+        logger.info("测试成功")
+        logger.info("被呼叫成功条数:{},脚本执行次数:{}".format(count, times))
+    else:
+        logger.info("被呼叫成功条数:{},脚本执行次数:{}".format(count, times))
+        logger.info("失败次数:{},号码以及对应次数:{}".format(len(fail), fail))
+
+
+logger = log_record()
+# todo 这个特殊, 环境自己配好
 if __name__ == '__main__':
-    call_url = "192.168.57.195"
-    called_url = "192.168.57.200"
-    # 环境准备
-    # 呼叫端配置
-    s1 = api_login(call_url)
-    voip1 = api_get_voip(call_url, s1)
-    api_set_voip(url=call_url, session_id=s1, enable="1", display_name=voip1["display_name"], h264="102",
-                 user="5998", userid="5998", password="Dnake@123", transport="0", proxy="sip:222.76.245.60:7788")
-    # 被呼叫端配置 todo 不同设备api不一样
-    s2 = api_login(called_url)
-    voip2 = api_get_voip(called_url, s2)
-    api_set_voip(url=called_url, session_id=s2, enable="1", display_name=voip1["display_name"], h264="102",
-                 user="5999", userid="5999", password="Dnake@123", transport="0", proxy="sip:222.76.245.60:7788")
+    # call_url = "192.168.57.195"
+    # called_url = "192.168.57.200"
+    # # 环境准备
+    # # 呼叫端配置
+    # s1 = api_login(call_url)
+    # voip1 = api_get_voip(call_url, s1)
+    # api_set_voip(url=call_url, session_id=s1, enable="1", display_name=voip1["display_name"], h264="102",
+    #              user="5998", userid="5998", password="Dnake@123", transport="0", proxy="sip:222.76.245.60:7788")
+    # # 被呼叫端配置 todo 不同设备api不一样
+    # s2 = api_login(called_url)
+    # voip2 = api_get_voip(called_url, s2)
+    # api_set_voip(url=called_url, session_id=s2, enable="1", display_name=voip1["display_name"], h264="102",
+    #              user="5999", userid="5999", password="Dnake@123", transport="0", proxy="sip:222.76.245.60:7788")
     # 用户名密码
     tn = connect_telnet("192.168.57.195", 9900, "root", "1234321")
     if tn:

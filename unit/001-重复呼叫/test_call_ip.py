@@ -1,9 +1,11 @@
 import time
+
+from log.log import log_record
 from start.api import api_login
 import json
 import requests
 
-from start.telnet import  connect_telnet, execute_command
+from start.telnet import connect_telnet, execute_command
 from start.tools import read_config
 
 
@@ -45,7 +47,7 @@ def api_get_call_logs(url, session_id):
     }
 
     response = requests.request("GET", "http://" + url + api_path, headers=headers, data=payload)
-    print("api_get_call_logs", response.text)
+    # print("api_get_call_logs", response.text)
     response_json = json.loads(response.text)
     return response_json
 
@@ -97,19 +99,49 @@ def api_check_call_logs(data, times):
     # 以下是数据校验
     count = 0
     fail = {}
+    # 获取测试数据
+    d = read_config()
+    number, duration = d.get('check', 'number'), d.getint('check', 'duration')
     for k, v in logs_data.items():
-        if v["number"] == "9999" and v["status"] == "0":
+        if v["host"] == number and v["duration"] == duration:
             count += 1
-        if v["status"] != "0":
-            fail["number"] += 1
+        if v["duration"] != duration:
+            if fail.get("响铃时间" + v["duration"] + "s"):
+                fail["响铃时间" + v["duration"] + "s"] += 1
+            else:
+                fail["响铃时间" + v["duration"]] = 1
     if count == times:
-        print("测试成功")
-        print("被呼叫成功条数:{},脚本执行次数:{}".format(count, times))
+        logger.info("测试成功")
+        logger.info("被呼叫成功条数:{},脚本执行次数:{}".format(count, times))
     else:
-        print("被呼叫成功条数:{},脚本执行次数:{}".format(count, times))
-        print("失败次数:{},号码以及对应次数:{}".format(len(fail), fail))
+        logger.info("被呼叫成功条数:{},脚本执行次数:{}".format(count, times))
+        logger.info("失败次数:{},号码以及对应次数:{}".format(len(fail), fail))
 
 
+def api_set_call_timeout(url, session_id, ringing, timeout):
+    """
+    :param url:
+    :param session_id:
+    :param ringing:
+    :param timeout:
+    :return:
+    """
+    api_path = "/cgi-bin/webapi.cgi?api=call_logs"
+
+    payload = "ringing={}&timeout={}".format(ringing, timeout)
+
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': "SessionID=" + session_id
+    }
+
+    response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
+    print("api_set_call_timeout", response.text)
+    response_json = json.loads(response.text)
+    return response_json
+
+
+logger = log_record()
 if __name__ == '__main__':
     # 获取测试数据
     data = read_config()
@@ -123,6 +155,9 @@ if __name__ == '__main__':
     session = api_login(called_url)
     # 删除通话记录
     api_del_call_logs(called_url, session, "-1")
+    # 设置响铃超时
+    duration = data.getint('check', 'duration')
+    api_set_call_timeout(called_url, session, str(duration), "120")
 
     # 用户名密码
     tn = connect_telnet(call_url, 9900, "root", "1234321")
@@ -143,10 +178,12 @@ if __name__ == '__main__':
             # 执行命令
             execute_command(tn, shell_script)
             time.sleep(16)
-            print("这是第{}次呼叫".format(i))
+            logger.info("这是第{}次呼叫".format(i))
     else:
-        print("发送指令失败")
+        logger.info("发送指令失败")
 
+    # 等待振铃结束, 产生记录
+    time.sleep(10)
     # 登录被呼设备
     session = api_login(called_url)
     # 获取开锁记录

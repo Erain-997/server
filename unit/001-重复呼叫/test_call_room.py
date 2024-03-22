@@ -32,6 +32,29 @@ def api_del_call_logs(url, session_id, index):
     return response_json
 
 
+def api_set_call_timeout(url, session_id, ringing, timeout):
+    """
+    :param url:
+    :param session_id:
+    :param ringing:响铃时间
+    :param timeout:通话时间
+    :return:
+    """
+    api_path = "/cgi-bin/webapi.cgi?api=call_logs"
+
+    payload = "ringing={}&timeout={}".format(ringing, timeout)
+    print("payload: ", payload, "-----------")
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': "SessionID=" + session_id
+    }
+
+    response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
+    print("api_set_call_timeout", response.text)
+    response_json = json.loads(response.text)
+    return response_json
+
+
 def api_get_call_logs(url, session_id):
     """
     :param url:
@@ -103,10 +126,13 @@ def api_check_call_logs(data, times):
     d = read_config()
     number, duration = d.get('check', 'number'), d.getint('check', 'duration')
     for k, v in logs_data.items():
-        if v["number"] == number and v["duration"] == duration:
+        if v["host"] == number and v["duration"] == duration:
             count += 1
         if v["duration"] != duration:
-            fail["number"] += 1
+            if fail.get("响铃时间" + v["duration"] + "s"):
+                fail["响铃时间" + v["duration"] + "s"] += 1
+            else:
+                fail["响铃时间" + v["duration"]] = 1
     if count == times:
         logger.info("测试成功")
         logger.info("被呼叫成功条数:{},脚本执行次数:{}".format(count, times))
@@ -130,6 +156,9 @@ if __name__ == '__main__':
     session = api_login(called_url)
     # 删除通话记录
     api_del_call_logs(called_url, session, "-1")
+    # 设置响铃超时
+    duration = data.getint('check', 'duration')
+    api_set_call_timeout(called_url, session, str(duration), "120")
 
     # 用户名密码
     tn = connect_telnet("192.168.57.195", 9900, "root", "1234321")
@@ -155,6 +184,8 @@ if __name__ == '__main__':
     else:
         logger.info("发送指令失败")
 
+    # 等待振铃结束, 产生记录
+    time.sleep(10)
     # 登录被呼设备
     session = api_login(called_url)
     # 获取开锁记录
