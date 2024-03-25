@@ -154,7 +154,7 @@ def api_check_unlock_logs(data, times):
     root = ET.fromstring(data)
     # 获取 max 字段
     max_value = root.find('max').text
-    logger.info('总的记录条数:', max_value)
+    logger.info('总的记录条数:{}'.format(max_value))
     # 数据处理, 处理出每一条记录
     logs_data = {}
     # 查找并分组元素
