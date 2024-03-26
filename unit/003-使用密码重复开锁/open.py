@@ -38,6 +38,8 @@ def api_del_unlock_password(url, session_id, index):
     response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
     # print("api_del_unlock_password", response.text)
     response_json = json.loads(response.text)
+    if response_json["result"] == "200":
+        logger.info("删除开锁密码成功")
     return response_json
 
 
@@ -60,6 +62,8 @@ def api_del_unlock_logs(url, session_id, index):
     response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
     # print("api_del_unlock_logs", response.text)
     response_json = json.loads(response.text)
+    if response_json["result"] == "200":
+        logger.info("删除开锁记录成功")
     return response_json
 
 
@@ -84,6 +88,8 @@ def api_set_unlock_password(url, session_id, action, password, relays):
     response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
     # print("api_set_unlock_password", response.text)
     response_json = json.loads(response.text)
+    if response_json["result"] == "200":
+        logger.info("新增开锁密码9999成功")
     return response_json
 
 
@@ -105,6 +111,8 @@ def api_get_unlock_password(url, session_id):
     response = requests.request("GET", "http://" + url + api_path, headers=headers, data=payload)
     # print("api_get_unlock_password", response.text)
     response_json = json.loads(response.text)
+    # if response_json["result"] == "200":
+    #     logger.info("获取开锁密码9999成功")
     return response_json
 
 
@@ -126,6 +134,8 @@ def api_get_unlock_logs(url, session_id):
     response = requests.request("GET", "http://" + url + api_path, headers=headers, data=payload)
     # print("api_get_unlock_logs", response.text)
     response_json = json.loads(response.text)
+    # if response_json["result"] == "200":
+    #     logger.info("获取开锁记录成功")
     return response_json
 
 
@@ -146,6 +156,7 @@ def api_show_unlock_logs(url, session_id, log_path):
     response = requests.request("GET", "http://" + url + log_path, headers=headers, data=payload)
     # print("api_show_unlock_logs", response.text)
     # response_json = json.loads(response.text)
+
     return response.text
 
 

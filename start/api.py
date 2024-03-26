@@ -18,7 +18,7 @@ def api_login(url):
         print("新服务器SessionId:", response.cookies["SessionID"].strip())
         return response.cookies["SessionID"].strip()
     # 解析 JSON 数据
-    # print(response.text, 11)
+    print(response.text, 11)
     response_json = json.loads(response.text)
     print("旧服务器SessionId:", response_json['data']['SessionID'].strip())
     return response_json['data']['SessionID'].strip()

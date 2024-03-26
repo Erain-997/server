@@ -2,20 +2,23 @@
 # __author__ = "dnake"
 import os
 from airtest.core.api import *
+from app.common import connect_devices, get_devices
 
 
-def test_QR():
-    # auto_setup(__file__)
-    # connect an android phone with adb
-    dev = connect_device("android:///ZHSKUKMRVKAQRWTG")
-    # 唤醒
-    dev.wake()
+def QR():
+    device = get_devices()
+    if len(device) == 0:
+        print("-------沒鏈接設備-----------")
+        return
+
+    model_name = "二維碼開鎖"
+    report_name, dev, poco = connect_devices(model_name, "ZHSKUKMRVKAQRWTG")
     # 杀
     dev.stop_app("com.dnakesmart")
-    # # set_current(0)
-    # dev.shell("adb --version")
     # 启动
     dev.start_app("com.dnakesmart")
+
+    # 用例内容
     time.sleep(10)
     for i in range(100):
         touch(Template(r"点二维码.png", record_pos=(-0.324, -0.562), resolution=(720, 1544)))
@@ -26,4 +29,4 @@ def test_QR():
 
 
 if __name__ == '__main__':
-    test_QR()
+    QR()

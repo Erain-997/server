@@ -27,8 +27,10 @@ def api_del_call_logs(url, session_id, index):
     }
 
     response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
-    print("api_del_call_logs", response.text)
+    # print("api_del_call_logs", response.text)
     response_json = json.loads(response.text)
+    if response_json["result"] == "200":
+        logger.info("删除通话记录成功")
     return response_json
 
 
@@ -43,15 +45,17 @@ def api_set_call_timeout(url, session_id, ringing, timeout):
     api_path = "/cgi-bin/webapi.cgi?api=call_logs"
 
     payload = "ringing={}&timeout={}".format(ringing, timeout)
-    print("payload: ", payload, "-----------")
+    # print("payload: ", payload, "-----------")
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Cookie': "SessionID=" + session_id
     }
 
     response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
-    print("api_set_call_timeout", response.text)
+    # print("api_set_call_timeout", response.text)
     response_json = json.loads(response.text)
+    if response_json["result"] == "200":
+        logger.info("设置响铃时间{}s,超时时间120s成功".format(ringing))
     return response_json
 
 
@@ -71,8 +75,10 @@ def api_get_call_logs(url, session_id):
     }
 
     response = requests.request("GET", "http://" + url + api_path, headers=headers, data=payload)
-    print("api_get_call_logs", response.text)
+    # print("api_get_call_logs", response.text)
     response_json = json.loads(response.text)
+    if response_json["result"] == "200":
+        logger.info("获取通话记录成功")
     return response_json
 
 
