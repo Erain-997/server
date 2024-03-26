@@ -31,7 +31,7 @@ def set_ringing_time():
 
 
 def test_repeated_monitoring(dev, duration):
-    poco = AndroidUiautomationPoco()
+    poco = AndroidUiautomationPoco(screenshot_each_action=False)
 
     touch(Template(r"监视.png", record_pos=(-0.098, 0.184), resolution=(1280, 800)))
     time.sleep(duration)
@@ -50,7 +50,10 @@ if __name__ == '__main__':
         durations = data.get('info', 'duration').split(',')
         times = data.get('info', 'times')
         print(durations, times)
-        device = before_test()
+        # device = before_test()
+        device = connect_device("Android://127.0.0.1:5037/192.168.57.199:5555")
+        device.wake()
+        device.home()
         for i in durations:
             for j in times:
                 # # 创建线程并启动
