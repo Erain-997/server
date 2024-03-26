@@ -1,2 +1,5 @@
 .idea/
 unit/003-使用密码重复开锁/logs/
+unit/005-室内机重复监视门口机/report*/
+unit/005-室内机重复监视门口机/logs/
+unit/001-重复呼叫/logs/

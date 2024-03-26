@@ -51,6 +51,8 @@ def connect_devices_ip(name, ip):
     poco = AndroidUiautomationPoco()
     wake()
     home()
+    # 设置日志级别为 WARNING
+    # set_log_level(logging.WARNING)
     return name + f"_{current_time}", poco
 
 

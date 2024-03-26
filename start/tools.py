@@ -19,6 +19,6 @@ def read_config():
     # 创建 ConfigParser 对象
     config = configparser.ConfigParser()
     # 读取 INI 文件
-    config.read('cfg.ini')
+    config.read('cfg.ini', encoding='utf-8')
 
     return config
