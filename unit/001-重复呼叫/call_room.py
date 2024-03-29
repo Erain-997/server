@@ -27,7 +27,60 @@ def api_del_call_logs(url, session_id, index):
     }
 
     response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
-    # print("api_del_call_logs", response.text)
+    print("api_del_call_logs", response.text)
+    response_json = json.loads(response.text)
+
+    return response_json
+
+
+def api_set_outdoor_device(url, session_id, mode, build, unit, index):
+    """
+    :param url:
+    :param session_id:
+    :param mode:
+    :param build:
+    :param unit:
+    :param index:
+    :return:
+    """
+    api_path = "/cgi-bin/webapi.cgi?api=device"
+
+    payload = "mode{}&build={}&unit={}&index={}".format(mode, build, unit, index)
+    # print("payload: ", payload, "-----------")
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': "SessionID=" + session_id
+    }
+
+    response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
+    print("api_set_outdoor_device", response.text)
+    response_json = json.loads(response.text)
+
+    return response_json
+
+
+def api_set_indoor_device(url, session_id, build, unit, room, index, sync):
+    """
+    :param url:
+    :param session_id:
+    :param build:
+    :param unit:
+    :param room:
+    :param index:
+    :param sync:
+    :return:
+    """
+    api_path = "/cgi-bin/webapi.cgi?api=device"
+
+    payload = "build={}&unit={}&room{}&index={}&sync={}".format(build, unit, room, index, sync)
+    # print("payload: ", payload, "-----------")
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        'Cookie': "SessionID=" + session_id
+    }
+    print("http://" + url + api_path,22222222,payload)
+    response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
+    print("api_set_indoor_device", response.text)
     response_json = json.loads(response.text)
 
     return response_json
@@ -46,12 +99,12 @@ def api_set_call_timeout(url, session_id, ringing, timeout):
     payload = "ringing={}&timeout={}".format(ringing, timeout)
     # print("payload: ", payload, "-----------")
     headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json; charset=utf-8',
         'Cookie': "SessionID=" + session_id
     }
 
     response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
-    # print("api_set_call_timeout", response.text)
+    print("api_set_call_timeout", response.text)
     response_json = json.loads(response.text)
 
     return response_json
@@ -148,13 +201,15 @@ logger = log_record()
 if __name__ == '__main__':
     # 获取测试数据
     data = read_config()
-
     # 呼叫设备
     call_url = data.get('call', 'url')
     # 被呼设备
     called_url = data.get('called', 'url')
     # 测试次数
     times = data.getint('info', 'times')
+    build, unit, room = data.get('device', 'build'), data.get('device', 'unit'), data.get('device', 'room')
+
+    # 设置室内机
     # 登录设备
     session = api_login(called_url)
     # 删除通话记录
@@ -162,9 +217,16 @@ if __name__ == '__main__':
     # 设置响铃超时
     duration = data.get('check', 'duration')
     api_set_call_timeout(called_url, session, duration, "120")
+    # 设置房号
+    api_set_indoor_device(called_url, session, build, unit, room, "0", "578821")
+
+    # 设置门口机
+    # 登录设备
+    session2 = api_login(call_url)
+    api_set_outdoor_device(call_url, session2, "0", build, unit, 2)
 
     # 用户名密码
-    tn = connect_telnet("192.168.57.195", 9900, "root", "1234321")
+    tn = connect_telnet(call_url, 9900, "root", "1234321")
     if tn:
         # 测试次数
         for i in range(1, times):
@@ -172,23 +234,24 @@ if __name__ == '__main__':
             shell_script = """
             #!/bin/sh
             /dnake/bin/dmsg /ui/v170/key data=*
-            sleep 0.5
+            sleep 0.6
             /dnake/bin/dmsg /ui/v170/key data=2
-            sleep 0.5
+            sleep 0.6
             /dnake/bin/dmsg /ui/v170/key data=8
-            sleep 0.5
-            /dnake/bin/dmsg /ui/v170/key data=0
+            sleep 0.6
+            /dnake/bin/dmsg /ui/v170/key data=1
             """
 
             # 执行命令
             execute_command(tn, shell_script)
-            time.sleep(16)
+            time.sleep(int(duration) + 3)
+            # 有概率呼出失败
             logger.info("这是第{}次呼叫".format(i))
     else:
         logger.info("发送指令失败")
 
     # 等待振铃结束, 产生记录
-    time.sleep(10)
+    time.sleep(int(duration) + 3)
     # 登录被呼设备
     session = api_login(called_url)
     # 获取开锁记录

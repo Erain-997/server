@@ -20,7 +20,7 @@ def QR():
 
     # 用例内容
     time.sleep(10)
-    for i in range(1000):
+    for i in range(10):
         touch(Template(r"点二维码.png", record_pos=(-0.324, -0.562), resolution=(720, 1544)))
         time.sleep(1)
 
