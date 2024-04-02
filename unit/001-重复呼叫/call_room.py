@@ -80,7 +80,7 @@ def api_set_indoor_device(url, session_id, build, unit, room, index, sync):
     }
     print("http://" + url + api_path,22222222,payload)
     response = requests.request("POST", "http://" + url + api_path, headers=headers, data=payload)
-    print("api_set_indoor_device", response.text)
+    # print("api_set_indoor_device", response.text)
     response_json = json.loads(response.text)
 
     return response_json
@@ -211,35 +211,48 @@ if __name__ == '__main__':
 
     # 设置室内机
     # 登录设备
-    session = api_login(called_url)
+    #session = api_login(called_url)
     # 删除通话记录
-    api_del_call_logs(called_url, session, "-1")
+    #api_del_call_logs(called_url, session, "-1")
     # 设置响铃超时
     duration = data.get('check', 'duration')
-    api_set_call_timeout(called_url, session, duration, "120")
+    #api_set_call_timeout(called_url, session, duration, "120")
     # 设置房号
-    api_set_indoor_device(called_url, session, build, unit, room, "0", "578821")
+    #api_set_indoor_device(called_url, session, build, unit, room, "0", "578821")
 
     # 设置门口机
     # 登录设备
-    session2 = api_login(call_url)
-    api_set_outdoor_device(call_url, session2, "0", build, unit, 2)
+    #session2 = api_login(call_url)
+    #api_set_outdoor_device(call_url, session2, "0", build, unit, 2)
 
     # 用户名密码
     tn = connect_telnet(call_url, 9900, "root", "1234321")
     if tn:
         # 测试次数
-        for i in range(1, times):
+        for i in range(1, times+1):
             # 脚本内容
             shell_script = """
             #!/bin/sh
-            /dnake/bin/dmsg /ui/v170/key data=*
+            /dnake/bin/dmsg /ui/v170/key data=*      
+            sleep 0.6
+            /dnake/bin/dmsg /ui/v170/key data=1
+            sleep 0.6
+            /dnake/bin/dmsg /ui/v170/key data=5
+            sleep 0.6
+            /dnake/bin/dmsg /ui/v170/key data=#
             sleep 0.6
             /dnake/bin/dmsg /ui/v170/key data=2
             sleep 0.6
-            /dnake/bin/dmsg /ui/v170/key data=8
+            /dnake/bin/dmsg /ui/v170/key data=#
             sleep 0.6
             /dnake/bin/dmsg /ui/v170/key data=1
+            sleep 0.6
+            /dnake/bin/dmsg /ui/v170/key data=1
+            sleep 0.6
+            /dnake/bin/dmsg /ui/v170/key data=1
+            sleep 0.6
+            /dnake/bin/dmsg /ui/v170/key data=6
+            sleep 0.6
             """
 
             # 执行命令
